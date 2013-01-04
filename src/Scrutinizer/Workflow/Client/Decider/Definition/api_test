@@ -1,0 +1,54 @@
+$def = SequenceBuilder::create()
+
+;
+
+$parallel = ParallelBuilder::create()
+    ->activity('foo')
+        ->useWorkflowInput()
+        ->maxRetries(3)
+        ->id('foo-bar')
+    ->end()
+    ->activity('bar')
+        ->useWorkflowInput()
+        ->useActivityResult('foo-bar')
+        ->prepareInput(function(WorkflowExecution $execution) {
+
+        })
+        ->retryIf(function(WorkflowExecution $execution, AbstractTask $lastFailedTask) {
+        })
+    ->end()
+    ->sequence()
+
+    ->end()
+;
+
+ParallelBuilder::create()
+    ->sequence()
+        ->activity('a1', 'doA')
+            ->useWorkflowInput()
+            ->maxRetries(3)
+        ->end()
+        ->activity('a2', 'doA')
+            ->useActivityResult('a1')
+            ->maxRetries(3)
+        ->end()
+        ->activity('a3', 'doA')
+            ->useActivityResult('a2')
+            ->maxRetries(3)
+        ->end()
+        ->conditional()
+        ->end()
+        ->ifFailed('a3')
+            ->parallel()
+
+            ->end()
+            ->sequence()
+
+            ->end()
+        ->end()
+    ->end()
+    ->activity('doA')
+        ->useWorkflowInput()
+    ->end()
+    ->activity('doB')
+    ->end()
