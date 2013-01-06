@@ -21,7 +21,7 @@ namespace Scrutinizer\Workflow\Client;
 use PhpAmqpLib\Connection\AMQPConnection;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 
-class ExecutionScheduler
+class WorkflowClient
 {
     private $client;
 
@@ -45,6 +45,36 @@ class ExecutionScheduler
             'workflow' => $workflowName,
             'input' => $input,
             'tags' => $tags,
+        ), 'array');
+    }
+
+    /**
+     * Declares a new workflow type.
+     *
+     * This method is indempotent.
+     *
+     * @param string $name
+     * @param string $deciderQueueName
+     */
+    public function declareWorkflowType($name, $deciderQueueName)
+    {
+        return $this->client->invoke('workflow_type', array(
+            'name' => $name,
+            'decider_queue_name' => $deciderQueueName,
+        ), 'array');
+    }
+
+    /**
+     * Declares a new activity type.
+     *
+     * @param string $name
+     * @param string $queueName
+     */
+    public function declareActivityType($name, $queueName)
+    {
+        return $this->client->invoke('workflow_activity_type', array(
+            'name' => $name,
+            'queue_name' => $queueName,
         ), 'array');
     }
 }
