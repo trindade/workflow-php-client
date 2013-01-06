@@ -29,6 +29,9 @@ class WorkflowExecution
     /** @Serializer\Type("integer") */
     public $id;
 
+    /** @Serializer\Type("string") */
+    public $input;
+
     /**
      * @Serializer\Type("PhpCollection\Sequence<Task>")
      *
