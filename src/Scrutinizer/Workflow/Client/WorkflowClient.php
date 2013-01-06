@@ -18,16 +18,25 @@
 
 namespace Scrutinizer\Workflow\Client;
 
+use Doctrine\Common\Annotations\AnnotationReader;
 use PhpAmqpLib\Connection\AMQPConnection;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
+use Scrutinizer\Workflow\Client\Annotation\ActivityType;
+use Scrutinizer\Workflow\Client\Annotation\Type;
 
 class WorkflowClient
 {
     private $client;
+    private $annotationReader;
 
     public function __construct(RpcClient $client)
     {
         $this->client = $client;
+    }
+
+    public function setAnnotationReader(AnnotationReader $reader)
+    {
+        $this->annotationReader = $reader;
     }
 
     /**
@@ -46,6 +55,30 @@ class WorkflowClient
             'input' => $input,
             'tags' => $tags,
         ), 'array');
+    }
+
+    public function declareWorkflow($className)
+    {
+        if ( ! class_exists('Doctrine\Common\Annotations\AnnotationReader')) {
+            throw new \RuntimeException('declareWorkflow() requires the doctrine/common package.');
+        }
+
+        if (null === $this->annotationReader) {
+            $this->annotationReader = new AnnotationReader();
+        }
+
+        $annotations = $this->annotationReader->getClassAnnotations(new \ReflectionClass($className));
+        foreach ($annotations as $annot) {
+            if ( ! $annot instanceof Type) {
+                continue;
+            }
+
+            $this->declareWorkflowType($annot->name, $annot->deciderQueueName);
+            foreach ($annot->activities as $activityType) {
+                /** @var $activityType ActivityType */
+                $this->declareActivityType($activityType->name, $activityType->queue);
+            }
+        }
     }
 
     /**

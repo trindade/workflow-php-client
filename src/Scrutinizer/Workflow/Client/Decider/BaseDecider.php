@@ -18,20 +18,22 @@
 
 namespace Scrutinizer\Workflow\Client\Decider;
 
+use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
 use JMS\Serializer\Serializer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\RabbitMQ\Rpc\RpcError;
+use Scrutinizer\RabbitMQ\Rpc\RpcErrorException;
 use Scrutinizer\Workflow\Client\Transport\WorkflowExecution;
 use Scrutinizer\Workflow\RabbitMq\Transport\Decision;
 
 abstract class BaseDecider
 {
-    protected $client;
+    private $client;
+    private $serializer;
     private $con;
     private $channel;
-    private $serializer;
 
     public function __construct(AMQPConnection $con, Serializer $serializer, $queueName, RpcClient $client)
     {
@@ -49,25 +51,47 @@ abstract class BaseDecider
     public function consume(AMQPMessage $message)
     {
         /** @var $execution WorkflowExecution */
-        $execution = $this->serializer->deserialize($message->body, 'Scrutinizer\Workflow\Client\Transport\WorkflowExecution', 'json');
+        $execution = $this->deserialize($message->body, 'Scrutinizer\Workflow\Client\Transport\WorkflowExecution');
 
         $decisionBuilder = new DecisionsBuilder();
 
         $this->consumeInternal($execution, $decisionBuilder);
+        $this->cleanUp();
 
-        $rs = $this->client->invoke('workflow_decision', array(
-            'execution_id' => $execution->id,
-            'decisions' => $decisionBuilder->getDecisions(),
-        ), 'array');
-
-        if ($rs instanceof RpcError) {
+        try {
             $this->client->invoke('workflow_decision', array(
                 'execution_id' => $execution->id,
-                'decisions' => (new DecisionsBuilder())->failExecution($rs->message)->getDecisions(),
+                'decisions' => $decisionBuilder->getDecisions(),
+            ), 'array');
+        } catch (RpcErrorException $ex) {
+            $this->client->invoke('workflow_decision', array(
+                'execution_id' => $execution->id,
+                'decisions' => (new DecisionsBuilder())->failExecution($ex->getMessage())->getDecisions(),
             ), 'array');
         }
 
         $this->channel->basic_ack($message->get('delivery_tag'));
+    }
+
+    /**
+     * Sub-classes may want to override this method to perform common clean-up tasks after consumption of a message.
+     */
+    protected function cleanUp()
+    {
+    }
+
+    protected function serialize($data, array $groups = array())
+    {
+        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
+
+        return $this->serializer->serialize($data, 'json');
+    }
+
+    protected function deserialize($data, $type, array $groups = array())
+    {
+        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
+
+        return $this->serializer->deserialize($data, $type, 'json');
     }
 
     /**

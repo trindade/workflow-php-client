@@ -87,6 +87,13 @@ class WorkflowExecution
         return None::create();
     }
 
+    public function findSuccessfulActivity($activityName)
+    {
+        return $this->tasks->find(function(AbstractTask $task) use ($activityName) {
+            return $task instanceof ActivityTask && $task->hasSucceeded() && $task->activityName === $activityName;
+        });
+    }
+
     public function hasOpenActivities()
     {
         return -1 !== $this->tasks->lastIndexWhere(function(AbstractTask $task) {
