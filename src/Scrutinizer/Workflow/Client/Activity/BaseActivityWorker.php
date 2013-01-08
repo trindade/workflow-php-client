@@ -49,24 +49,20 @@ abstract class BaseActivityWorker
             }
 
             list($taskId, $executionId) = explode('.', $message->get('correlation_id'));
-            $rs = $this->client->invoke('workflow_activity_result', array(
+            $this->client->invoke('workflow_activity_result', array(
                 'task_id' => $taskId,
                 'execution_id' => $executionId,
                 'status' => 'success',
                 'result' => $output,
             ), 'array');
-
-            // TODO: Handle error?
         } catch (\Exception $ex) {
             list($taskId, $executionId) = explode('.', $message->get('correlation_id'));
-            $rs = $this->client->invoke('workflow_activity_result', array(
+            $this->client->invoke('workflow_activity_result', array(
                 'task_id' => $taskId,
                 'execution_id' => $executionId,
                 'status' => 'failure',
                 'failure_reason' => $ex->getMessage(),
             ), 'array');
-
-            // TODO: Handle error?
         }
 
         $this->channel->basic_ack($message->get('delivery_tag'));

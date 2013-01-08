@@ -76,6 +76,9 @@ class WorkflowExecution
         return self::STATE_FAILED === $this->state;
     }
 
+    /**
+     * @return AbstractActivityTask[]
+     */
     public function getClosedActivityTasksSinceLastDecision()
     {
         $lastEventId = $this->history->last()->get()->id;
