@@ -33,4 +33,11 @@ abstract class AbstractTask
 
     /** @Serializer\Type("DateTime") */
     public $createdAt;
+
+    abstract public function isOpen();
+
+    public function isClosed()
+    {
+        return ! $this->isOpen();
+    }
 }

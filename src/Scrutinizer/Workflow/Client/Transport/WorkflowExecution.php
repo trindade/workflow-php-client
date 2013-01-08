@@ -26,11 +26,21 @@ use PhpOption\Some;
 
 class WorkflowExecution
 {
-    /** @Serializer\Type("integer") */
+    const STATE_OPEN = 'open';
+    const STATE_FAILED = 'failed';
+    const STATE_SUCCEEDED = 'succeeded';
+
+    /** @Serializer\Type("string") */
     public $id;
 
     /** @Serializer\Type("string") */
+    public $workflowName;
+
+    /** @Serializer\Type("string") */
     public $input;
+
+    /** @Serializer\Type("string") */
+    public $state;
 
     /**
      * @Serializer\Type("PhpCollection\Sequence<Task>")
@@ -51,6 +61,21 @@ class WorkflowExecution
         return 1 === count($this->tasks);
     }
 
+    public function isOpen()
+    {
+        return self::STATE_OPEN === $this->state;
+    }
+
+    public function hasSucceeded()
+    {
+        return self::STATE_SUCCEEDED === $this->state;
+    }
+
+    public function hasFailed()
+    {
+        return self::STATE_FAILED === $this->state;
+    }
+
     public function getClosedActivityTasksSinceLastDecision()
     {
         $lastEventId = $this->history->last()->get()->id;
@@ -63,7 +88,7 @@ class WorkflowExecution
             /** @var $event Event */
             $event = $this->history->get($i);
 
-            if ($event->task instanceof ActivityTask && ! $event->task->isOpen()) {
+            if ($event->task instanceof AbstractActivityTask && ! $event->task->isOpen()) {
                 $tasks[] = $event->task;
             }
         }
@@ -90,14 +115,14 @@ class WorkflowExecution
     public function findSuccessfulActivity($activityName)
     {
         return $this->tasks->find(function(AbstractTask $task) use ($activityName) {
-            return $task instanceof ActivityTask && $task->hasSucceeded() && $task->activityName === $activityName;
+            return $task instanceof AbstractActivityTask && $task->hasSucceeded() && $task->getName() === $activityName;
         });
     }
 
     public function hasOpenActivities()
     {
         return -1 !== $this->tasks->lastIndexWhere(function(AbstractTask $task) {
-            return $task instanceof ActivityTask && $task->isOpen();
+            return $task instanceof AbstractActivityTask && $task->isOpen();
         });
     }
 

@@ -44,6 +44,10 @@ class TaskHandler implements SubscribingHandlerInterface
                 $class = 'Scrutinizer\Workflow\Client\Transport\DecisionTask';
                 break;
 
+            case 'workflow_execution':
+                $class = 'Scrutinizer\Workflow\Client\Transport\WorkflowExecutionTask';
+                break;
+
             default:
                 throw new \LogicException(sprintf('Unsupported decision type "%s".', $data['type']));
         }

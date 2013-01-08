@@ -26,7 +26,7 @@ class DecisionsBuilder
 
     public function rescheduleActivity(ActivityTask $task, array $newControlData = array())
     {
-        $this->scheduleActivity($task->activityName, $task->input, array_merge($task->control, $newControlData));
+        return $this->scheduleActivity($task->activityName, $task->input, array_merge($task->control, $newControlData));
     }
 
     /**
@@ -42,6 +42,20 @@ class DecisionsBuilder
             'type' => 'schedule_activity',
             'attributes' => array(
                 'activity' => $activityName,
+                'input' => $input,
+                'control' => $controlData,
+            ),
+        );
+
+        return $this;
+    }
+
+    public function scheduleChildWorkflow($workflowName, $input, array $controlData = array())
+    {
+        $this->decisions[] = array(
+            'type' => 'schedule_child_workflow',
+            'attributes' => array(
+                'workflow' => $workflowName,
                 'input' => $input,
                 'control' => $controlData,
             ),

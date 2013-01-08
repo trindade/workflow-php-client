@@ -20,7 +20,7 @@ namespace Scrutinizer\Workflow\Client\Transport;
 
 use JMS\Serializer\Annotation as Serializer;
 
-class ActivityTask extends AbstractTask
+class ActivityTask extends AbstractActivityTask
 {
     const STATE_OPEN = 'open';
     const STATE_FAILED = 'failed';
@@ -29,20 +29,11 @@ class ActivityTask extends AbstractTask
     /** @Serializer\Type("string") */
     public $input;
 
-    /** @Serializer\Type("array") @Serializer\SerializedName("control_data") */
-    public $control = array();
-
     /** @Serializer\Type("string") */
     public $result;
 
     /** @Serializer\Type("string") */
     public $state;
-
-    /**
-     * @Serializer\Type("DateTime")
-     * @var \DateTime
-     */
-    public $createdAt;
 
     /** @Serializer\Type("string") */
     public $failureReason;
@@ -63,5 +54,10 @@ class ActivityTask extends AbstractTask
     public function hasSucceeded()
     {
         return self::STATE_SUCCEEDED === $this->state;
+    }
+
+    public function getName()
+    {
+        return $this->activityName;
     }
 }
