@@ -13,6 +13,6 @@ final class Type
     /** @var string @Required */
     public $deciderQueueName;
 
-    /** @var array<ActivityType> @Required */
+    /** @var array<Scrutinizer\Workflow\Client\Annotation\ActivityType> @Required */
     public $activities = array();
 }

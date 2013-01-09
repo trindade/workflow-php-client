@@ -11,7 +11,7 @@ class CallbackDecider extends BaseDecider
 {
     private $callback;
 
-    public function __construct(AMQPConnection $con, Serializer $serializer, $queueName, RpcClient $client, CallbackInterface $callback)
+    public function __construct(AMQPConnection $con, Serializer $serializer, RpcClient $client, $queueName, CallbackInterface $callback)
     {
         parent::__construct($con, $serializer, $queueName, $client);
         $this->callback = $callback;

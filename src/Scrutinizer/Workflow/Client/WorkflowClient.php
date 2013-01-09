@@ -19,6 +19,7 @@
 namespace Scrutinizer\Workflow\Client;
 
 use Doctrine\Common\Annotations\AnnotationReader;
+use Doctrine\Common\Annotations\Reader;
 use PhpAmqpLib\Connection\AMQPConnection;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\Workflow\Client\Annotation\ActivityType;
@@ -34,7 +35,7 @@ class WorkflowClient
         $this->client = $client;
     }
 
-    public function setAnnotationReader(AnnotationReader $reader)
+    public function setAnnotationReader(Reader $reader)
     {
         $this->annotationReader = $reader;
     }
