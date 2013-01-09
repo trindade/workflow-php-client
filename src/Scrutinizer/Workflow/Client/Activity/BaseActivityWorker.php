@@ -21,6 +21,7 @@ namespace Scrutinizer\Workflow\Client\Activity;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
+use Scrutinizer\Workflow\Client\Serializer\FlattenException;
 
 abstract class BaseActivityWorker
 {
@@ -62,6 +63,7 @@ abstract class BaseActivityWorker
                 'execution_id' => $executionId,
                 'status' => 'failure',
                 'failure_reason' => $ex->getMessage(),
+                'failure_exception' => FlattenException::create($ex),
             ), 'array');
         }
 
