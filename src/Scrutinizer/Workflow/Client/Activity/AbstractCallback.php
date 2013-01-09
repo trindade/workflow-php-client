@@ -15,6 +15,10 @@ abstract class AbstractCallback implements CallbackInterface
         $this->serializer = $serializer ?: SerializerBuilder::create()->build();
     }
 
+    public function initialize()
+    {
+    }
+
     public function cleanUp()
     {
     }

@@ -32,6 +32,5 @@ class ExecutionLogger extends AbstractLogger
 
     public function log($level, $message, array $context = array())
     {
-        // TODO
     }
 }

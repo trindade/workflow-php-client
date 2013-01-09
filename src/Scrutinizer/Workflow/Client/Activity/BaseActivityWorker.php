@@ -42,13 +42,14 @@ abstract class BaseActivityWorker
 
     public function consume(AMQPMessage $message)
     {
+        list($taskId, $executionId) = explode('.', $message->get('correlation_id'));
+
         try {
             $output = $this->handle($message->body);
             if ( ! is_string($output)) {
                 throw new \RuntimeException(sprintf('The output must be a string, but got "%s".', gettype($output)));
             }
 
-            list($taskId, $executionId) = explode('.', $message->get('correlation_id'));
             $this->client->invoke('workflow_activity_result', array(
                 'task_id' => $taskId,
                 'execution_id' => $executionId,
@@ -56,7 +57,6 @@ abstract class BaseActivityWorker
                 'result' => $output,
             ), 'array');
         } catch (\Exception $ex) {
-            list($taskId, $executionId) = explode('.', $message->get('correlation_id'));
             $this->client->invoke('workflow_activity_result', array(
                 'task_id' => $taskId,
                 'execution_id' => $executionId,
@@ -77,8 +77,13 @@ abstract class BaseActivityWorker
      */
     abstract protected function handle($input);
 
+    protected function initialize()
+    {
+    }
+
     public function run()
     {
+        $this->initialize();
         while (count($this->channel->callbacks) > 0) {
             $this->channel->wait();
         }
