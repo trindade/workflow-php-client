@@ -5,6 +5,8 @@ namespace Scrutinizer\Workflow\Client\Activity;
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 abstract class AbstractCallback implements CallbackInterface
 {
@@ -21,6 +23,16 @@ abstract class AbstractCallback implements CallbackInterface
 
     public function cleanUp()
     {
+    }
+
+    protected function exec($cmd, $cwd = null)
+    {
+        $proc = new Process($cmd, $cwd);
+        if (0 !== $proc->run()) {
+            throw new ProcessFailedException($proc);
+        }
+
+        return $proc;
     }
 
     protected function serialize($data, array $groups = array())
