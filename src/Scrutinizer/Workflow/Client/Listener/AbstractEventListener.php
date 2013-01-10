@@ -25,7 +25,7 @@ abstract class AbstractEventListener
      * @param \PhpAmqpLib\Connection\AMQPConnection $con
      * @param string $pattern "*" substitues exactly one word, "#" zero or more words
      * @param string $listenerQueue If set, messages are durably routed to this queue until acknowledged.
-     *                              If not set, messages are routed to an exclusive, non-durable queue, auto-ack queue.
+     *                              If not set, messages are routed to an exclusive, non-durable, auto-ack queue.
      */
     public function __construct(AMQPConnection $con, $pattern, $listenerQueue = null, Serializer $serializer = null, LoggerInterface $logger = null)
     {
@@ -57,7 +57,6 @@ abstract class AbstractEventListener
                 $this->channel->basic_ack($message->get('delivery_tag'));
             }
         } catch (\Exception $ex) {
-            echo 'error occured: '.$ex->getMessage();
             $this->logger->error($ex->getMessage(), array('exception' => $ex));
 
             if ($this->hasStaticQueue) {
