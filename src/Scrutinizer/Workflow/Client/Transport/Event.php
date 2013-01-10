@@ -19,7 +19,6 @@
 namespace Scrutinizer\Workflow\Client\Transport;
 
 use JMS\Serializer\Annotation as Serializer;
-use PhpOption\Option;
 
 class Event
 {
@@ -35,6 +34,9 @@ class Event
     /** @Serializer\Type("array") */
     public $attributes;
 
-    /** @var Option<AbstractTask> */
-    public $task;
+    /**
+     * @Serializer\Type("Scrutinizer\Workflow\Client\Transport\WorkflowExecution")
+     * @var WorkflowExecution
+     */
+    public $workflowExecution;
 }
