@@ -58,6 +58,20 @@ class WorkflowClient
         ), 'array');
     }
 
+    /**
+     * Terminates the given workflow execution.
+     *
+     * @param string $executionId
+     *
+     * @return array
+     */
+    public function terminateExecution($executionId)
+    {
+        return $this->client->invoke('workflow_execution_termination', array(
+            'execution_id' => $executionId,
+        ), 'array');
+    }
+
     public function declareWorkflow($className)
     {
         if ( ! class_exists('Doctrine\Common\Annotations\AnnotationReader')) {
