@@ -20,14 +20,15 @@ abstract class AbstractEventListener
     private $hasStaticQueue;
     private $serializer;
     private $logger;
+    private $workflowNames = array();
+    private $eventNames = array();
 
     /**
      * @param \PhpAmqpLib\Connection\AMQPConnection $con
-     * @param string $pattern "*" substitues exactly one word, "#" zero or more words
      * @param string $listenerQueue If set, messages are durably routed to this queue until acknowledged.
      *                              If not set, messages are routed to an exclusive, non-durable, auto-ack queue.
      */
-    public function __construct(AMQPConnection $con, $pattern, $listenerQueue = null, Serializer $serializer = null, LoggerInterface $logger = null)
+    public function __construct(AMQPConnection $con, $listenerQueue = null, Serializer $serializer = null, LoggerInterface $logger = null)
     {
         $this->con = $con;
         $this->channel = $con->channel();
@@ -43,15 +44,30 @@ abstract class AbstractEventListener
         $this->channel->exchange_declare('workflow_events', 'topic');
 
         list($queueName, ) = $this->channel->queue_declare($listenerQueue ?: '', false, null !== $listenerQueue, null === $listenerQueue, null === $listenerQueue);
-        $this->channel->queue_bind($queueName, 'workflow_events', $pattern);
+        $this->channel->queue_bind($queueName, 'workflow_events', '#');
         $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'consume'));
+    }
+
+    public function listenForWorkflows(array $names)
+    {
+        $this->workflowNames = $names;
+    }
+
+    public function listenForEvents(array $names)
+    {
+        $this->eventNames = $names;
     }
 
     public function consume(AMQPMessage $message)
     {
         try {
+            /** @var $event Event */
             $event = $this->deserialize($message->body, 'Scrutinizer\Workflow\Client\Transport\Event');
-            $this->consumeInternal($event);
+
+            if ((empty($this->workflowNames) || in_array($event->workflowExecution->workflowName, $this->workflowNames, true))
+                    && (empty($this->eventNames) || in_array($event->name, $this->eventNames, true))) {
+                $this->consumeInternal($event);
+            }
 
             if ($this->hasStaticQueue) {
                 $this->channel->basic_ack($message->get('delivery_tag'));
