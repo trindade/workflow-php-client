@@ -55,8 +55,19 @@ abstract class BaseDecider
 
         $decisionBuilder = new DecisionsBuilder();
 
-        $this->consumeInternal($execution, $decisionBuilder);
-        $this->cleanUp();
+        try {
+            $this->consumeInternal($execution, $decisionBuilder);
+            $this->cleanUp();
+        } catch (\Exception $ex) {
+            $this->cleanUp();
+
+            // TODO: We should probably dispatch an error condition to the server, and let it decide what to do.
+            //       On the other hand, an exception in a decision task is really a logical program error that
+            //       cannot be recovered from, so it will probably have to always terminate an execution if it
+            //       happens. Right now, we would retry with a restarted decider, and if that continuously fails
+            //       the execution will be garbage collected eventually.
+            throw $ex;
+        }
 
         try {
             $this->client->invoke('workflow_decision', array(
