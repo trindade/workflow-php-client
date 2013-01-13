@@ -24,6 +24,7 @@ use PhpAmqpLib\Connection\AMQPConnection;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\Workflow\Client\Annotation\ActivityType;
 use Scrutinizer\Workflow\Client\Annotation\Type;
+use Scrutinizer\Workflow\Client\Transport\ExecutionListing;
 
 class WorkflowClient
 {
@@ -56,6 +57,26 @@ class WorkflowClient
             'input' => $input,
             'tags' => $tags,
         ), 'array');
+    }
+
+    /**
+     * @param string[] $workflowNames
+     * @param string[] $tags
+     * @param null|string $status "open", or "closed"
+     * @param string $order "asc" or "desc"
+     *
+     * @return ExecutionListing
+     */
+    public function listExecutions(array $workflowNames = array(), array $tags = array(), $status = null, $order = 'desc', $page = 1, $perPage = 20)
+    {
+        return $this->client->invoke('workflow_execution_listing', array(
+            'workflows' => $workflowNames,
+            'tags' => $tags,
+            'status' => $status,
+            'order' => $order,
+            'page' => $page,
+            'per_page' => $perPage,
+        ), 'Scrutinizer\Workflow\Client\Transport\ExecutionListing');
     }
 
     /**

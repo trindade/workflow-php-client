@@ -132,6 +132,13 @@ class WorkflowExecution
     /** @Serializer\PostDeserialize */
     private function postDeserialize()
     {
+        if (null === $this->tasks) {
+            $this->tasks = new Sequence();
+        }
+        if (null === $this->history) {
+            $this->history = new Sequence();
+        }
+
         $tasks = array();
         $previous = null;
         foreach ($this->tasks as $task) {
@@ -147,7 +154,9 @@ class WorkflowExecution
 
             $previous = $task;
         }
-        $task->next = None::create();
+        if (isset($task)) {
+            $task->next = None::create();
+        }
 
         foreach ($this->history as $event) {
             /** @var $event Event */
