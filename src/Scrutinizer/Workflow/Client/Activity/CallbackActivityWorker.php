@@ -23,7 +23,14 @@ class CallbackActivityWorker extends BaseActivityWorker
         if ($this->callback instanceof LoggerAwareInterface) {
         }
 
-        $rs = $this->callback->handle($input);
+        try {
+            $rs = $this->callback->handle($input);
+        } catch (\Exception $ex) {
+            $this->callback->cleanUp();
+
+            throw $ex;
+        }
+
         $this->callback->cleanUp();
 
         return $rs;
