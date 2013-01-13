@@ -64,12 +64,25 @@ class DecisionsBuilder
         return $this;
     }
 
-    public function failExecution($reason)
+    public function failExecution($reason, array $details = array())
     {
         $this->decisions[] = array(
             'type' => 'execution_failed',
             'attributes' => array(
                 'reason' => $reason,
+                'details' => $details,
+            ),
+        );
+
+        return $this;
+    }
+
+    public function cancelExecution(array $details = array())
+    {
+        $this->decisions[] = array(
+            'type' => 'execution_canceled',
+            'attributes' => array(
+                'details' => $details,
             ),
         );
 
