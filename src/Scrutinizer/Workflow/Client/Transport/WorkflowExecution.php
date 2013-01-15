@@ -91,7 +91,7 @@ class WorkflowExecution
             /** @var $event Event */
             $event = $this->history->get($i);
 
-            if ($event->task instanceof AbstractActivityTask && ! $event->task->isOpen()) {
+            if ($event->task instanceof AbstractActivityTask && ! $event->task->isOpen() && ! in_array($event->task, $tasks, true)) {
                 $tasks[] = $event->task;
             }
         }
