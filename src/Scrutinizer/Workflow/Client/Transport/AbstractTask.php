@@ -35,6 +35,7 @@ abstract class AbstractTask
     public $createdAt;
 
     abstract public function isOpen();
+    abstract public function __toString();
 
     public function isClosed()
     {

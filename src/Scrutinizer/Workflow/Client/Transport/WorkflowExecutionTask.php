@@ -33,4 +33,9 @@ class WorkflowExecutionTask extends AbstractActivityTask
     {
         return $this->execution->workflowName;
     }
+
+    public function __toString()
+    {
+        return sprintf('WorkflowExecutionTask(id = %s, workflowName = %s, state = %s)', $this->id, $this->execution->workflowName, $this->execution->state);
+    }
 }

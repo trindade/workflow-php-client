@@ -40,4 +40,9 @@ class DecisionTask extends AbstractTask
     {
         return $this->state === self::STATE_CLOSED;
     }
+
+    public function __toString()
+    {
+        return sprintf('DecisionTask(id = %s, state = %s)', $this->id, $this->state);
+    }
 }

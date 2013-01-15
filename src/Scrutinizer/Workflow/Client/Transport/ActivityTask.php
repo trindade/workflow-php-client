@@ -60,4 +60,9 @@ class ActivityTask extends AbstractActivityTask
     {
         return $this->activityName;
     }
+
+    public function __toString()
+    {
+        return sprintf('ActivityTask(id = %s, name = %s, state = %s)', $this->id, $this->activityName, $this->state);
+    }
 }
