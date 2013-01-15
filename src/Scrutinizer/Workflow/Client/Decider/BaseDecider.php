@@ -30,8 +30,8 @@ use Scrutinizer\Workflow\RabbitMq\Transport\Decision;
 
 abstract class BaseDecider
 {
-    protected $serializer;
     protected $channel;
+    private $serializer;
     private $client;
     private $con;
 

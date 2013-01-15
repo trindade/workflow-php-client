@@ -30,8 +30,6 @@ abstract class BaseActivityWorker
     private $client;
     private $queueName;
 
-    protected $logger;
-
     public function __construct(AMQPConnection $con, RpcClient $client, $queueName)
     {
         $this->con = $con;
