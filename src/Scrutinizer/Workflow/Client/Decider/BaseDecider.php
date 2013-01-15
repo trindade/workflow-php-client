@@ -30,10 +30,10 @@ use Scrutinizer\Workflow\RabbitMq\Transport\Decision;
 
 abstract class BaseDecider
 {
+    protected $serializer;
+    protected $channel;
     private $client;
-    private $serializer;
     private $con;
-    private $channel;
 
     public function __construct(AMQPConnection $con, Serializer $serializer, $queueName, RpcClient $client)
     {

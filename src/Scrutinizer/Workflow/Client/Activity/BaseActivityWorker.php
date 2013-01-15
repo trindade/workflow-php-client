@@ -25,10 +25,12 @@ use Scrutinizer\Workflow\Client\Serializer\FlattenException;
 
 abstract class BaseActivityWorker
 {
+    protected $channel;
     private $con;
-    private $channel;
     private $client;
     private $queueName;
+
+    protected $logger;
 
     public function __construct(AMQPConnection $con, RpcClient $client, $queueName)
     {

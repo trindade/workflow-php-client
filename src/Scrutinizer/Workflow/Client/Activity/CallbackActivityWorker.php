@@ -6,7 +6,7 @@ use JMS\Serializer\Serializer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use Psr\Log\LoggerAwareInterface;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
-use Scrutinizer\Workflow\Client\TaskLogger;
+use Scrutinizer\Workflow\Client\Worker\ChannelAwareInterface;
 
 class CallbackActivityWorker extends BaseActivityWorker
 {
@@ -20,7 +20,8 @@ class CallbackActivityWorker extends BaseActivityWorker
 
     protected function handle($input)
     {
-        if ($this->callback instanceof LoggerAwareInterface) {
+        if ($this->callback instanceof ChannelAwareInterface) {
+            $this->callback->setChannel($this->channel);
         }
 
         try {
