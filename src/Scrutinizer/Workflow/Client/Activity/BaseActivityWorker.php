@@ -37,6 +37,8 @@ abstract class BaseActivityWorker
         $this->client = $client;
         $this->queueName = $queueName;
 
+        $this->channel->basic_qos(0, 1, false);
+
         $this->channel->queue_declare($queueName, false, true, false, false);
         $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'consume'));
     }

@@ -42,6 +42,8 @@ abstract class BaseDecider
         $this->serializer = $serializer;
         $this->client = $client;
 
+        $this->channel->basic_qos(0, 1, false);
+
         $this->channel->queue_declare('workflow_decision', false, true, false, false);
 
         $this->channel->queue_declare($queueName, false, true, false, false);

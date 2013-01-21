@@ -41,6 +41,8 @@ abstract class AbstractEventListener
             ->build();
         $this->logger = $logger ?: new NullLogger();
 
+        $this->channel->basic_qos(0, 1, false);
+
         $this->channel->exchange_declare('workflow_events', 'topic');
 
         list($queueName, ) = $this->channel->queue_declare($listenerQueue ?: '', false, null !== $listenerQueue, null === $listenerQueue, null === $listenerQueue);
