@@ -47,15 +47,18 @@ class WorkflowClient
      * @param string $workflowName The name of the workflow which was registered with the workflow server.
      * @param string $input The input may be any string that is understood by the decider associated with this workflow.
      * @param string[] $tags Some tags which should be applied to this execution.
+     * @param integer $maxRuntime The maximum runtime in seconds. Executions which exceed this runtime will be garbage
+     *                            collected by the server, and set to timed out state.
      *
      * @return array An array of the form ["execution_id" => "123"]
      */
-    public function startExecution($workflowName, $input, array $tags = array())
+    public function startExecution($workflowName, $input, array $tags = array(), $maxRuntime = 3600)
     {
         return $this->client->invoke('workflow_execution', array(
             'workflow' => $workflowName,
             'input' => $input,
             'tags' => $tags,
+            'max_runtime' => $maxRuntime,
         ), 'array');
     }
 
