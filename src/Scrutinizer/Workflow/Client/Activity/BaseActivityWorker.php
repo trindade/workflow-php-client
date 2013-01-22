@@ -29,6 +29,7 @@ abstract class BaseActivityWorker
     private $con;
     private $client;
     private $queueName;
+    private $maxRuntime = 0;
 
     public function __construct(AMQPConnection $con, RpcClient $client, $queueName)
     {
@@ -41,6 +42,11 @@ abstract class BaseActivityWorker
 
         $this->channel->queue_declare($queueName, false, true, false, false);
         $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'consume'));
+    }
+
+    public function setMaxRuntime($seconds)
+    {
+        $this->maxRuntime = (integer) $seconds;
     }
 
     public function consume(AMQPMessage $message)
@@ -87,8 +93,13 @@ abstract class BaseActivityWorker
 
     public function run()
     {
+        $startTime = time();
         $this->initialize();
         while (count($this->channel->callbacks) > 0) {
+            if ($this->maxRuntime !== 0 && time() - $startTime > $this->maxRuntime) {
+                return;
+            }
+
             $this->channel->wait();
         }
     }

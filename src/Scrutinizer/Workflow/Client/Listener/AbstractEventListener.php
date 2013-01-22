@@ -22,6 +22,7 @@ abstract class AbstractEventListener
     private $logger;
     private $workflowNames = array();
     private $eventNames = array();
+    private $maxRuntime = 0;
 
     /**
      * @param \PhpAmqpLib\Connection\AMQPConnection $con
@@ -48,6 +49,11 @@ abstract class AbstractEventListener
         list($queueName, ) = $this->channel->queue_declare($listenerQueue ?: '', false, null !== $listenerQueue, null === $listenerQueue, null === $listenerQueue);
         $this->channel->queue_bind($queueName, 'workflow_events', '#');
         $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'consume'));
+    }
+
+    public function setMaxRuntime($seconds)
+    {
+        $this->maxRuntime = (integer) $seconds;
     }
 
     public function listenForWorkflows(array $names)
@@ -85,7 +91,12 @@ abstract class AbstractEventListener
 
     public function run()
     {
+        $startTime = time();
         while (count($this->channel->callbacks) > 0) {
+            if ($this->maxRuntime !== 0 && time() - $startTime > $this->maxRuntime) {
+                return;
+            }
+
             $this->channel->wait();
         }
     }
