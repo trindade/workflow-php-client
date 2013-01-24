@@ -21,6 +21,7 @@ namespace Scrutinizer\Workflow\Client\Activity;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
+use Scrutinizer\Workflow\Client\Exception\UnworkableStateException;
 use Scrutinizer\Workflow\Client\Serializer\FlattenException;
 
 abstract class BaseActivityWorker
@@ -30,6 +31,7 @@ abstract class BaseActivityWorker
     private $client;
     private $queueName;
     private $maxRuntime = 0;
+    private $terminate;
 
     public function __construct(AMQPConnection $con, RpcClient $client, $queueName)
     {
@@ -73,6 +75,10 @@ abstract class BaseActivityWorker
                 'failure_reason' => $ex->getMessage(),
                 'failure_exception' => FlattenException::create($ex),
             ), 'array');
+
+            if ($ex instanceof UnworkableStateException) {
+                $this->terminate = true;
+            }
         }
 
         $this->channel->basic_ack($message->get('delivery_tag'));
@@ -93,9 +99,11 @@ abstract class BaseActivityWorker
 
     public function run()
     {
+        $this->terminate = false;
+
         $startTime = time();
         $this->initialize();
-        while (count($this->channel->callbacks) > 0) {
+        while (count($this->channel->callbacks) > 0 && false === $this->terminate) {
             if ($this->maxRuntime !== 0 && time() - $startTime > $this->maxRuntime) {
                 return;
             }
