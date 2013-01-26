@@ -24,21 +24,16 @@ class CallbackActivityWorker extends BaseActivityWorker
             $this->callback->setChannel($this->channel);
         }
 
-        try {
-            $rs = $this->callback->handle($input);
-        } catch (\Exception $ex) {
-            $this->callback->cleanUp();
-
-            throw $ex;
-        }
-
-        $this->callback->cleanUp();
-
-        return $rs;
+        return $this->callback->handle($input);
     }
 
     protected function initialize()
     {
         $this->callback->initialize();
+    }
+
+    protected function cleanUp()
+    {
+        $this->callback->cleanUp();
     }
 }

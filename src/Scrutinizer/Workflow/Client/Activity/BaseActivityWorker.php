@@ -82,6 +82,7 @@ abstract class BaseActivityWorker
         }
 
         $this->channel->basic_ack($message->get('delivery_tag'));
+        $this->cleanUp();
     }
 
     /**
@@ -94,6 +95,10 @@ abstract class BaseActivityWorker
     abstract protected function handle($input);
 
     protected function initialize()
+    {
+    }
+
+    protected function cleanUp()
     {
     }
 
