@@ -109,7 +109,7 @@ class WorkflowExecution
     public function getLastTaskMatching(\Closure $predicate)
     {
         if (-1 !== $i = $this->tasks->lastIndexWhere($predicate)) {
-            return new Some($this->tasks[$i]);
+            return new Some($this->tasks->get($i));
         }
 
         return None::create();
