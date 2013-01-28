@@ -64,6 +64,16 @@ class DecisionsBuilder
         return $this;
     }
 
+    public function adoptExecution($executionId)
+    {
+        $this->decisions[] = array(
+            'type' => 'adopt_execution',
+            'attributes' => array(
+                'execution_id' => $executionId,
+            ),
+        );
+    }
+
     public function failExecution($reason, array $details = array())
     {
         $this->decisions[] = array(
