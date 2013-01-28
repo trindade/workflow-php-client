@@ -42,7 +42,10 @@ abstract class AbstractEventListener
             ->build();
         $this->logger = $logger ?: new NullLogger();
 
-        $this->channel->basic_qos(0, 1, false);
+        // Setting a lower pre-fetch count only makes sense for non-exclusive queues.
+        if (null !== $listenerQueue) {
+            $this->channel->basic_qos(0, 1, false);
+        }
 
         $this->channel->exchange_declare('workflow_events', 'topic');
 
