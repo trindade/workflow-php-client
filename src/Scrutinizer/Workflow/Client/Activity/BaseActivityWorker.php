@@ -70,6 +70,8 @@ abstract class BaseActivityWorker
 
         switch ($rs['action']) {
             case 'cancel':
+                $this->channel->basic_ack($message->get('delivery_tag'));
+
                 return;
 
             case 'start':
