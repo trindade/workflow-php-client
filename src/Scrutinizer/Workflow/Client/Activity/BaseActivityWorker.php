@@ -49,7 +49,6 @@ abstract class BaseActivityWorker
         $this->channel->basic_qos(0, 1, false);
 
         $this->channel->queue_declare($queueName, false, true, false, false);
-        $this->channel->basic_consume($queueName, '', false, false, false, false, array($this, 'consume'));
     }
 
     public function setMaxRuntime($seconds)
@@ -134,6 +133,9 @@ abstract class BaseActivityWorker
 
         $startTime = time();
         $this->initialize();
+
+        $this->channel->basic_consume($this->queueName, '', false, false, false, false, array($this, 'consume'));
+
         while (count($this->channel->callbacks) > 0 && false === $this->terminate) {
             if ($this->maxRuntime !== 0 && time() - $startTime > $this->maxRuntime) {
                 return;
