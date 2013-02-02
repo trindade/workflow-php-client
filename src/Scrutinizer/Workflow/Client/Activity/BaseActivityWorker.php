@@ -23,6 +23,8 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\Workflow\Client\Exception\UnworkableStateException;
 use Scrutinizer\Workflow\Client\Serializer\FlattenException;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 abstract class BaseActivityWorker
 {
@@ -32,13 +34,17 @@ abstract class BaseActivityWorker
     private $queueName;
     private $maxRuntime = 0;
     private $terminate;
+    private $machineIdentifier;
+    private $workerIdentifier;
 
-    public function __construct(AMQPConnection $con, RpcClient $client, $queueName)
+    public function __construct(AMQPConnection $con, RpcClient $client, $queueName, $machineIdentifier = null, $workerIdentifier = null)
     {
         $this->con = $con;
         $this->channel = $con->channel();
         $this->client = $client;
         $this->queueName = $queueName;
+        $this->machineIdentifier = $machineIdentifier ?: $this->determineMachine();
+        $this->workerIdentifier = $workerIdentifier;
 
         $this->channel->basic_qos(0, 1, false);
 
@@ -54,6 +60,24 @@ abstract class BaseActivityWorker
     public function consume(AMQPMessage $message)
     {
         list($taskId, $executionId) = explode('.', $message->get('correlation_id'));
+
+        $rs = $this->client->invoke('workflow_activity_start', array(
+            'task_id' => $taskId,
+            'execution_id' => $executionId,
+            'machine_identifier' => $this->machineIdentifier,
+            'worker_identifier' => $this->workerIdentifier,
+        ), 'array');
+
+        switch ($rs['action']) {
+            case 'cancel':
+                return;
+
+            case 'start':
+                break;
+
+            default:
+                throw new \LogicException(sprintf('Unknown action "%s".', $rs['action']));
+        }
 
         try {
             $output = $this->handle($message->body);
@@ -115,5 +139,15 @@ abstract class BaseActivityWorker
 
             $this->channel->wait();
         }
+    }
+
+    private function determineMachine()
+    {
+        $proc = new Process('hostname');
+        if (0 !== $proc->run()) {
+            throw new ProcessFailedException($proc);
+        }
+
+        return trim($proc->getOutput());
     }
 }

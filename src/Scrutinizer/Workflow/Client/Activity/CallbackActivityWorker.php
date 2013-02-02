@@ -12,9 +12,9 @@ class CallbackActivityWorker extends BaseActivityWorker
 {
     private $callback;
 
-    public function __construct(AMQPConnection $con, RpcClient $client, $queueName, CallbackInterface $callback)
+    public function __construct(AMQPConnection $con, RpcClient $client, $queueName, CallbackInterface $callback, $machineIdentifier, $workerIdentifier)
     {
-        parent::__construct($con, $client, $queueName);
+        parent::__construct($con, $client, $queueName, $machineIdentifier, $workerIdentifier);
         $this->callback = $callback;
     }
 
