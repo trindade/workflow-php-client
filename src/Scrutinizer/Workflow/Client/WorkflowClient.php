@@ -83,6 +83,20 @@ class WorkflowClient
     }
 
     /**
+     * Retrieves details about an execution.
+     *
+     * @param string $executionId
+     *
+     * @return Transport\WorkflowExecution
+     */
+    public function getExecutionDetails($executionId)
+    {
+        return $this->client->invoke('workflow_execution_details', array(
+            'execution_id' => $executionId,
+        ), 'Scrutinizer\Workflow\Client\Transport\WorkflowExecution');
+    }
+
+    /**
      * Terminates the given workflow execution.
      *
      * @param string $executionId
