@@ -39,4 +39,11 @@ class Event
      * @var WorkflowExecution
      */
     public $workflowExecution;
+
+    /**
+     * This is populated by the WorkflowExecution after deserialization.
+     *
+     * @var AbstractTask
+     */
+    public $task;
 }
