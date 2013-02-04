@@ -83,10 +83,15 @@ abstract class BaseDecider
                 'decisions' => $decisionBuilder->getDecisions(),
             ), 'array');
         } catch (RpcErrorException $ex) {
-            $this->client->invoke('workflow_decision', array(
-                'execution_id' => $execution->id,
-                'decisions' => (new DecisionsBuilder())->failExecution($ex->getMessage())->getDecisions(),
-            ), 'array');
+            try {
+                $this->client->invoke('workflow_decision', array(
+                    'execution_id' => $execution->id,
+                    'decisions' => (new DecisionsBuilder())->failExecution($ex->getMessage())->getDecisions(),
+                ), 'array');
+            } catch (\Exception $ex) {
+                // If another error occurs, there is nothing we can do but to discard the message, and let the server
+                // garbage collect the execution.
+            }
         }
 
         $this->channel->basic_ack($message->get('delivery_tag'));
