@@ -29,6 +29,8 @@ class WorkflowExecution
     const STATE_OPEN = 'open';
     const STATE_FAILED = 'failed';
     const STATE_SUCCEEDED = 'succeeded';
+    const STATE_CANCELED = 'canceled';
+    const STATE_TIMED_OUT = 'timed_out';
 
     /** @Serializer\Type("string") */
     public $id;
@@ -74,6 +76,16 @@ class WorkflowExecution
     public function hasFailed()
     {
         return self::STATE_FAILED === $this->state;
+    }
+
+    public function hasTimedOut()
+    {
+        return self::STATE_TIMED_OUT === $this->state;
+    }
+
+    public function isCanceled()
+    {
+        return self::STATE_CANCELED === $this->state;
     }
 
     /**
