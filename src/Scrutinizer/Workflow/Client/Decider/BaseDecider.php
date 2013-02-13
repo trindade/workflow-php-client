@@ -25,6 +25,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\RabbitMQ\Rpc\RpcError;
 use Scrutinizer\RabbitMQ\Rpc\RpcErrorException;
+use Scrutinizer\Workflow\Client\Serializer\FlattenException;
 use Scrutinizer\Workflow\Client\Transport\WorkflowExecution;
 use Scrutinizer\Workflow\RabbitMq\Transport\Decision;
 
@@ -67,13 +68,32 @@ abstract class BaseDecider
             $this->consumeInternal($execution, $decisionBuilder);
             $this->cleanUp();
         } catch (\Exception $ex) {
-            $this->cleanUp();
+            // If we reach this, there is some sort of logical error in the program. We will not be able to recover from
+            // this state automatically, and in order to not block all other messages, we will simply acknowledge this
+            // one. This will eventually result in the execution being garbage collected. We will try to clean-up as
+            // much as possible, and then throw the original exception as this was the root cause for this problem.
 
-            // TODO: We should probably dispatch an error condition to the server, and let it decide what to do.
-            //       On the other hand, an exception in a decision task is really a logical program error that
-            //       cannot be recovered from, so it will probably have to always terminate an execution if it
-            //       happens. Right now, we would retry with a restarted decider, and if that continuously fails
-            //       the execution will be garbage collected eventually.
+            // TODO: Add a more elaborate logging mechanism.
+
+            try {
+                $this->cleanUp();
+            } catch (\Exception $nestedEx) { }
+
+            try {
+                $this->client->invoke('workflow_decision', array(
+                    'execution_id' => $execution->id,
+                    'decisions' => (new DecisionsBuilder())
+                        ->failExecution($ex->getMessage(), array(
+                            'exception' => FlattenException::create($ex),
+                        ))
+                        ->getDecisions(),
+                ), 'array');
+            } catch (\Exception $nestedEx) { }
+
+            try {
+                $this->channel->basic_ack($message->get('delivery_tag'));
+            } catch (\Exception $ex) { }
+
             throw $ex;
         }
 
