@@ -93,13 +93,28 @@ abstract class BaseActivityWorker
                 'result' => $output,
             ), 'array');
         } catch (\Exception $ex) {
-            $this->client->invoke('workflow_activity_result', array(
-                'task_id' => $taskId,
-                'execution_id' => $executionId,
-                'status' => 'failure',
-                'failure_reason' => $ex->getMessage(),
-                'failure_exception' => FlattenException::create($ex),
-            ), 'array');
+            try {
+                $this->client->invoke('workflow_activity_result', array(
+                    'task_id' => $taskId,
+                    'execution_id' => $executionId,
+                    'status' => 'failure',
+                    'failure_reason' => $ex->getMessage(),
+                    'failure_exception' => FlattenException::create($ex),
+                ), 'array');
+            } catch (\Exception $failedEx) {
+                // We re-send the failure report with a generic error message.
+                try {
+                    $this->client->invoke('workflow_activity_result', array(
+                        'task_id' => $taskId,
+                        'execution_id' => $executionId,
+                        'status' => 'failure',
+                        'failure_reason' => 'Original execution and automatic failure reporting failed; please check the workers logs.',
+                    ), 'array');
+                } catch (\Exception $nestedFailedEx) {
+                    // There is nothing we can do here, we just ignore it. The server will eventually garbage collect
+                    // this task, and the appropriate coordinator will take action accordingly.
+                }
+            }
 
             if ($ex instanceof UnworkableStateException) {
                 $this->terminate = true;
