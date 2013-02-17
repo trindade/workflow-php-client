@@ -13,8 +13,11 @@ class SimpleCallableListener extends AbstractEventListener
 
     /**
      * @param \PhpAmqpLib\Connection\AMQPConnection $con
-     * @param string $listenerQueue If set, messages are durably routed to this queue until acknowledged.
-     *                              If not set, messages are routed to an exclusive, non-durable queue.
+     * @param callable   $handler       The handler
+     * @param string     $listenerQueue If set, messages are durably routed to this queue until acknowledged.
+     *                                  If not set, messages are routed to an exclusive, non-durable queue.
+     * @param Serializer $serializer    The serializer
+     * @param Logger     $logger        The logger
      */
     public function __construct(AMQPConnection $con, callable $handler, $listenerQueue = null, Serializer $serializer = null, LoggerInterface $logger = null)
     {
