@@ -137,7 +137,7 @@ class WorkflowClient
     /**
      * Declares a new workflow type.
      *
-     * This method is indempotent.
+     * This method is idempotent.
      *
      * @param string $name
      * @param string $deciderQueueName
