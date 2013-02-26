@@ -5,6 +5,7 @@ namespace Scrutinizer\Workflow\Client\Listener;
 use JMS\Serializer\Serializer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use Psr\Log\LoggerInterface;
+use Scrutinizer\ErrorReporter\ReporterInterface;
 use Scrutinizer\Workflow\Client\Transport\Event;
 
 class SimpleCallableListener extends AbstractEventListener
@@ -19,9 +20,9 @@ class SimpleCallableListener extends AbstractEventListener
      * @param Serializer $serializer    The serializer
      * @param Logger     $logger        The logger
      */
-    public function __construct(AMQPConnection $con, callable $handler, $listenerQueue = null, Serializer $serializer = null, LoggerInterface $logger = null)
+    public function __construct(AMQPConnection $con, callable $handler, $listenerQueue = null, Serializer $serializer = null, ReporterInterface $reporter = null)
     {
-        parent::__construct($con, $listenerQueue, $serializer, $logger);
+        parent::__construct($con, $listenerQueue, $serializer, $reporter);
         $this->handler = $handler;
     }
 

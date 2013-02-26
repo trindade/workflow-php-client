@@ -20,6 +20,8 @@ namespace Scrutinizer\Workflow\Client\Activity;
 
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use Scrutinizer\ErrorReporter\NullReporter;
+use Scrutinizer\ErrorReporter\ReporterInterface;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\Workflow\Client\Exception\UnworkableStateException;
 use Scrutinizer\Workflow\Client\Serializer\FlattenException;
@@ -36,8 +38,9 @@ abstract class BaseActivityWorker
     private $terminate;
     private $machineIdentifier;
     private $workerIdentifier;
+    private $reporter;
 
-    public function __construct(AMQPConnection $con, RpcClient $client, $queueName, $machineIdentifier = null, $workerIdentifier = null)
+    public function __construct(AMQPConnection $con, RpcClient $client, $queueName, $machineIdentifier = null, $workerIdentifier = null, ReporterInterface $reporter = null)
     {
         $this->con = $con;
         $this->channel = $con->channel();
@@ -45,6 +48,7 @@ abstract class BaseActivityWorker
         $this->queueName = $queueName;
         $this->machineIdentifier = $machineIdentifier ?: $this->determineMachine();
         $this->workerIdentifier = $workerIdentifier;
+        $this->reporter = $reporter ?: new NullReporter();
 
         $this->channel->basic_qos(0, 1, false);
 
@@ -93,6 +97,8 @@ abstract class BaseActivityWorker
                 'result' => $output,
             ), 'array');
         } catch (\Exception $ex) {
+            $this->reporter->reportException($ex);
+
             try {
                 $this->client->invoke('workflow_activity_result', array(
                     'task_id' => $taskId,
@@ -102,6 +108,8 @@ abstract class BaseActivityWorker
                     'failure_exception' => FlattenException::create($ex),
                 ), 'array');
             } catch (\Exception $failedEx) {
+                $this->reporter->reportException($failedEx);
+
                 // We re-send the failure report with a generic error message.
                 try {
                     $this->client->invoke('workflow_activity_result', array(
@@ -111,6 +119,8 @@ abstract class BaseActivityWorker
                         'failure_reason' => 'Original execution and automatic failure reporting failed; please check the workers logs.',
                     ), 'array');
                 } catch (\Exception $nestedFailedEx) {
+                    $this->reporter->reportException($nestedFailedEx);
+
                     // There is nothing we can do here, we just ignore it. The server will eventually garbage collect
                     // this task, and the appropriate coordinator will take action accordingly.
                 }

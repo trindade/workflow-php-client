@@ -2,7 +2,9 @@
 
 namespace Scrutinizer\Workflow\Client\Decider;
 
+use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
+use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 
@@ -21,15 +23,11 @@ abstract class AbstractCallback implements CallbackInterface
 
     protected function serialize($data, array $groups = array())
     {
-        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
-
-        return $this->serializer->serialize($data, 'json');
+        return $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups($groups));
     }
 
     protected function deserialize($data, $type, array $groups = array())
     {
-        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
-
-        return $this->serializer->deserialize($data, $type, 'json');
+        return $this->serializer->deserialize($data, $type, 'json', DeserializationContext::create()->setGroups($groups));
     }
 }

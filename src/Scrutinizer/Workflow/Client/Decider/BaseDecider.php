@@ -22,6 +22,8 @@ use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
 use JMS\Serializer\Serializer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use Scrutinizer\ErrorReporter\NullReporter;
+use Scrutinizer\ErrorReporter\ReporterInterface;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\RabbitMQ\Rpc\RpcError;
 use Scrutinizer\RabbitMQ\Rpc\RpcErrorException;
@@ -36,13 +38,15 @@ abstract class BaseDecider
     private $client;
     private $con;
     private $maxRuntime = 0;
+    private $reporter;
 
-    public function __construct(AMQPConnection $con, Serializer $serializer, $queueName, RpcClient $client)
+    public function __construct(AMQPConnection $con, Serializer $serializer, $queueName, RpcClient $client, ReporterInterface $reporter = null)
     {
         $this->con = $con;
         $this->channel = $con->channel();
         $this->serializer = $serializer;
         $this->client = $client;
+        $this->reporter = $reporter ?: new NullReporter();
 
         $this->channel->basic_qos(0, 1, false);
 
@@ -68,16 +72,18 @@ abstract class BaseDecider
             $this->consumeInternal($execution, $decisionBuilder);
             $this->cleanUp();
         } catch (\Exception $ex) {
+            $this->reporter->reportException($ex);
+
             // If we reach this, there is some sort of logical error in the program. We will not be able to recover from
             // this state automatically, and in order to not block all other messages, we will simply acknowledge this
             // one. This will eventually result in the execution being garbage collected. We will try to clean-up as
             // much as possible, and then throw the original exception as this was the root cause for this problem.
 
-            // TODO: Add a more elaborate logging mechanism.
-
             try {
                 $this->cleanUp();
-            } catch (\Exception $nestedEx) { }
+            } catch (\Exception $nestedEx) {
+                $this->reporter->reportException($nestedEx);
+            }
 
             try {
                 $this->client->invoke('workflow_decision', array(
@@ -88,11 +94,15 @@ abstract class BaseDecider
                         ))
                         ->getDecisions(),
                 ), 'array');
-            } catch (\Exception $nestedEx) { }
+            } catch (\Exception $nestedEx) {
+                $this->reporter->reportException($nestedEx);
+            }
 
             try {
                 $this->channel->basic_ack($message->get('delivery_tag'));
-            } catch (\Exception $ex) { }
+            } catch (\Exception $ex) {
+                $this->reporter->reportException($ex);
+            }
 
             throw $ex;
         }
@@ -103,12 +113,16 @@ abstract class BaseDecider
                 'decisions' => $decisionBuilder->getDecisions(),
             ), 'array');
         } catch (RpcErrorException $ex) {
+            $this->reporter->reportException($ex);
+
             try {
                 $this->client->invoke('workflow_decision', array(
                     'execution_id' => $execution->id,
                     'decisions' => (new DecisionsBuilder())->failExecution($ex->getMessage())->getDecisions(),
                 ), 'array');
             } catch (\Exception $ex) {
+                $this->reporter->reportException($ex);
+
                 // If another error occurs, there is nothing we can do but to discard the message, and let the server
                 // garbage collect the execution.
             }

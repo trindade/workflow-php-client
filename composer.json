@@ -1,15 +1,12 @@
 {
     "name": "scrutinizer/workflow-client",
 
-    "repositories": [
-        {"type": "git", "url": "git://github.com/scrutinizer-ci/rabbitmq"}
-    ],
-
     "require": {
         "videlalvaro/php-amqplib": "dev-master",
         "phpoption/phpoption": "1.*",
         "phpcollection/phpcollection": "0.2.*@dev",
-        "scrutinizer/rabbitmq": "dev-master"
+        "scrutinizer/rabbitmq": "dev-master",
+        "scrutinizer/error-reporter": "dev-master"
     },
 
     "autoload": {

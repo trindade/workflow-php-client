@@ -2,14 +2,18 @@
 
 namespace Scrutinizer\Workflow\Client\Listener;
 
+use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
 use JMS\Serializer\Handler\HandlerRegistry;
+use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
 use JMS\Serializer\SerializerBuilder;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Scrutinizer\ErrorReporter\NullReporter;
+use Scrutinizer\ErrorReporter\ReporterInterface;
 use Scrutinizer\Workflow\Client\Serializer\TaskHandler;
 use Scrutinizer\Workflow\Client\Transport\Event;
 
@@ -23,6 +27,7 @@ abstract class AbstractEventListener
     private $workflowNames = array();
     private $eventNames = array();
     private $maxRuntime = 0;
+    private $reporter;
 
     /**
      * @param \PhpAmqpLib\Connection\AMQPConnection $con
@@ -31,7 +36,7 @@ abstract class AbstractEventListener
      * @param Serializer $serializer    The serializer
      * @param Logger     $logger        The logger
      */
-    public function __construct(AMQPConnection $con, $listenerQueue = null, Serializer $serializer = null, LoggerInterface $logger = null)
+    public function __construct(AMQPConnection $con, $listenerQueue = null, Serializer $serializer = null, ReporterInterface $reporter = null)
     {
         $this->con = $con;
         $this->channel = $con->channel();
@@ -42,7 +47,7 @@ abstract class AbstractEventListener
                 $registry->registerSubscribingHandler(new TaskHandler());
             })
             ->build();
-        $this->logger = $logger ?: new NullLogger();
+        $this->reporter = $reporter ?: new NullReporter();
 
         // Setting a lower pre-fetch count only makes sense for non-exclusive queues.
         if (null !== $listenerQueue) {
@@ -86,7 +91,7 @@ abstract class AbstractEventListener
                 $this->channel->basic_ack($message->get('delivery_tag'));
             }
         } catch (\Exception $ex) {
-            $this->logger->error($ex->getMessage(), array('exception' => $ex));
+            $this->reporter->reportException($ex);
 
             if ($this->hasStaticQueue) {
                 $this->channel->basic_nack($message->get('delivery_tag'));
@@ -108,16 +113,12 @@ abstract class AbstractEventListener
 
     protected function serialize($data, array $groups = array())
     {
-        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
-
-        return $this->serializer->serialize($data, 'json');
+        return $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups($groups));
     }
 
     protected function deserialize($data, $type, array $groups = array())
     {
-        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
-
-        return $this->serializer->deserialize($data, $type, 'json');
+        return $this->serializer->deserialize($data, $type, 'json', DeserializationContext::create()->setGroups($groups));
     }
 
     abstract protected function consumeInternal(Event $event);

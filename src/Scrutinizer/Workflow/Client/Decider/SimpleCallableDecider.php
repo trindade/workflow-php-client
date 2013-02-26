@@ -20,6 +20,7 @@ namespace Scrutinizer\Workflow\Client\Decider;
 
 use JMS\Serializer\Serializer;
 use PhpAmqpLib\Connection\AMQPConnection;
+use Scrutinizer\ErrorReporter\ReporterInterface;
 use Scrutinizer\RabbitMQ\Rpc\RpcClient;
 use Scrutinizer\Workflow\Client\Transport\WorkflowExecution;
 
@@ -27,9 +28,9 @@ class SimpleCallableDecider extends BaseDecider
 {
     private $callback;
 
-    public function __construct(AMQPConnection $con, Serializer $serializer, $queueName, RpcClient $client, callable $callback)
+    public function __construct(AMQPConnection $con, Serializer $serializer, $queueName, RpcClient $client, callable $callback, ReporterInterface $reporter = null)
     {
-        parent::__construct($con, $serializer, $queueName, $client);
+        parent::__construct($con, $serializer, $queueName, $client, $reporter);
         $this->callback= $callback;
     }
 
