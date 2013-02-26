@@ -9,6 +9,8 @@
         "scrutinizer/error-reporter": "dev-master"
     },
 
+    "minimum-stability": "dev",
+
     "autoload": {
         "psr-0": {
             "Scrutinizer": "src/"
