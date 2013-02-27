@@ -18,6 +18,7 @@
 
 namespace Scrutinizer\Workflow\Client\Serializer;
 
+use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\GraphNavigator;
 use JMS\Serializer\Handler\SubscribingHandlerInterface;
 use JMS\Serializer\JsonDeserializationVisitor;
@@ -33,7 +34,7 @@ class TaskHandler implements SubscribingHandlerInterface
         ));
     }
 
-    public function deserializeTaskFromJson(JsonDeserializationVisitor $visitor, array $data, array $type)
+    public function deserializeTaskFromJson(JsonDeserializationVisitor $visitor, array $data, array $type, DeserializationContext $context)
     {
         switch ($data['type']) {
             case 'activity':
@@ -56,6 +57,6 @@ class TaskHandler implements SubscribingHandlerInterface
                 throw new \LogicException(sprintf('Unsupported decision type "%s".', $data['type']));
         }
 
-        return $visitor->getNavigator()->accept($data, array('name' => $class, 'params' => array()), $visitor);
+        return $context->accept($data, array('name' => $class, 'params' => array()));
     }
 }

@@ -23,7 +23,6 @@ abstract class AbstractEventListener
     private $channel;
     private $hasStaticQueue;
     private $serializer;
-    private $logger;
     private $workflowNames = array();
     private $eventNames = array();
     private $maxRuntime = 0;

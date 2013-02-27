@@ -18,7 +18,9 @@
 
 namespace Scrutinizer\Workflow\Client\Decider;
 
+use JMS\Serializer\DeserializationContext;
 use JMS\Serializer\Exclusion\GroupsExclusionStrategy;
+use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
 use PhpAmqpLib\Connection\AMQPConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -140,16 +142,22 @@ abstract class BaseDecider
 
     protected function serialize($data, array $groups = array())
     {
-        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
+        $context = new SerializationContext();
+        if ( ! empty($groups)) {
+            $context->setGroups($groups);
+        }
 
-        return $this->serializer->serialize($data, 'json');
+        return $this->serializer->serialize($data, 'json', $context);
     }
 
     protected function deserialize($data, $type, array $groups = array())
     {
-        $this->serializer->setExclusionStrategy(empty($groups) ? null : new GroupsExclusionStrategy($groups));
+        $context = new DeserializationContext();
+        if ( ! empty($groups)) {
+            $context->setGroups($groups);
+        }
 
-        return $this->serializer->deserialize($data, $type, 'json');
+        return $this->serializer->deserialize($data, $type, 'json', $context);
     }
 
     /**
