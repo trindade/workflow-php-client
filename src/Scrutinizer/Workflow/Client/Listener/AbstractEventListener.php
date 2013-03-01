@@ -112,12 +112,22 @@ abstract class AbstractEventListener
 
     protected function serialize($data, array $groups = array())
     {
-        return $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups($groups));
+        $context = SerializationContext::create();
+        if ( ! empty($groups)) {
+            $context->setGroups($groups);
+        }
+
+        return $this->serializer->serialize($data, 'json', $context);
     }
 
     protected function deserialize($data, $type, array $groups = array())
     {
-        return $this->serializer->deserialize($data, $type, 'json', DeserializationContext::create()->setGroups($groups));
+        $context = DeserializationContext::create();
+        if ( ! empty($groups)) {
+            $context->setGroups($groups);
+        }
+
+        return $this->serializer->deserialize($data, $type, 'json', $context);
     }
 
     abstract protected function consumeInternal(Event $event);
