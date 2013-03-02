@@ -49,7 +49,7 @@ abstract class AbstractCallback implements CallbackInterface
 
     protected function deserialize($data, $type, array $groups = array())
     {
-        $context = new SerializationContext();
+        $context = new DeserializationContext();
         if ( ! empty($groups)) {
             $context->setGroups($groups);
         }
