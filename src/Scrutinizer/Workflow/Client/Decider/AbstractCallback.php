@@ -23,11 +23,21 @@ abstract class AbstractCallback implements CallbackInterface
 
     protected function serialize($data, array $groups = array())
     {
-        return $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups($groups));
+        $context = new SerializationContext();
+        if ( ! empty($groups)) {
+            $context->setGroups($groups);
+        }
+
+        return $this->serializer->serialize($data, 'json', $context);
     }
 
     protected function deserialize($data, $type, array $groups = array())
     {
-        return $this->serializer->deserialize($data, $type, 'json', DeserializationContext::create()->setGroups($groups));
+        $context = new DeserializationContext();
+        if ( ! empty($groups)) {
+            $context->setGroups($groups);
+        }
+
+        return $this->serializer->deserialize($data, $type, 'json', $context);
     }
 }
